@@ -176,7 +176,7 @@ Execute (Makers: process_output):
 
   function! Neomake_test_maker_process_output(context) abort
     AssertEqual ['maker_output'], a:context.output
-    AssertEqual 'stdout', a:contest.source
+    AssertEqual 'stdout', a:context.source
     return g:neomake_test_entries
   endfunction
 
