@@ -156,6 +156,13 @@ function! s:MakeJob(make_id, options) abort
 
     let maker = jobinfo.maker
 
+    if has_key(maker, 'get_list_entries')
+        let entries = maker.get_list_entries()
+        call s:ProcessEntries(jobinfo, entries)
+        call s:CleanJobinfo(jobinfo)
+        return
+    endif
+
     " Check for already running job for the same maker (from other runs).
     " This used to use this key: maker.name.',ft='.maker.ft.',buf='.maker.bufnr
     if len(s:jobs)
@@ -176,13 +183,6 @@ function! s:MakeJob(make_id, options) abort
             call neomake#CancelJob(jobinfo.id)
             return s:MakeJob(s:make_id, a:options)
         endif
-    endif
-
-    if has_key(maker, 'get_list_entries')
-        let entries = maker.get_list_entries()
-        call s:ProcessEntries(jobinfo, entries)
-        call s:CleanJobinfo(jobinfo)
-        return
     endif
 
     if !executable(maker.exe)
