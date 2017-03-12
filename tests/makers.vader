@@ -214,14 +214,12 @@ Execute (Makers: get_list_entries):
     \ 'type': 'E',
     \ }]
 
-  function! Neomake_test_maker_get_list_entries(...) abort dict
+  let maker = {}
+  function! maker.get_list_entries(...) abort dict
     let a = a:000
     Assert !has_key(self, 'errorformat'), 'errorformat is not required'
     return g:neomake_test_entries
   endfunction
-
-  let maker = {
-  \ 'get_list_entries': function('Neomake_test_maker_get_list_entries')}
 
   call neomake#Make(1, [maker])
   NeomakeTestsWaitForFinishedJobs
