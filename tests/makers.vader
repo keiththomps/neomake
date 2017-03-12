@@ -175,12 +175,14 @@ Execute (Makers: process_output):
     \ }]
 
   function! Neomake_test_maker_process_output(context) abort
+    AssertEqual ['maker_output'], a:context.output
+    AssertEqual 'stdout', a:contest.source
     return g:neomake_test_entries
   endfunction
 
   let maker = {
   \ 'exe': 'printf',
-  \ 'args': ['foo'],
+  \ 'args': ['maker_output'],
   \ 'append_file': 0,
   \ 'process_output': function('Neomake_test_maker_process_output')}
 
