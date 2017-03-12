@@ -511,6 +511,11 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             let maker.name = 'unnamed_maker'
         endif
     endif
+    let bufnr = bufnr('%')
+    let GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, fts, bufnr)
+    if GetEntries != -1
+        let maker.get_list_entries = GetEntries
+    endif
     " Set defaults for "normal" makers.
     if !has_key(maker, 'get_list_entries')
         let defaults = copy(s:maker_defaults)
@@ -520,7 +525,6 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             \ 'errorformat': &errorformat,
             \ 'fts': fts,
             \ })
-        let bufnr = bufnr('%')
         for [key, default] in items(defaults)
             let maker[key] = neomake#utils#GetSetting(key, maker, default, fts, bufnr)
             unlet! default  " workaround for old Vim (7.3.429)
