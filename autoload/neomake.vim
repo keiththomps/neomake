@@ -308,7 +308,8 @@ function! s:MakeJob(make_id, options) abort
 endfunction
 
 let s:maker_base = {}
-function! s:maker_base._get_tempfilename(bufnr) abort dict
+let s:command_maker_base = {}
+function! s:command_maker_base._get_tempfilename(bufnr) abort dict
     if has_key(self, 'tempfile_name')
         return self.tempfile_name
     endif
@@ -329,7 +330,7 @@ function! s:maker_base._get_tempfilename(bufnr) abort dict
 endfunction
 
 " Check if a temporary file is used, and set self.tempfile_name in case it is.
-function! s:maker_base._get_fname_for_buffer(bufnr) abort
+function! s:command_maker_base._get_fname_for_buffer(bufnr) abort
     let bufname = bufname(a:bufnr)
     if !len(bufname)
         let temp_file = self._get_tempfilename(a:bufnr)
@@ -375,7 +376,7 @@ function! s:maker_base._get_fname_for_buffer(bufnr) abort
     return bufname
 endfunction
 
-function! s:maker_base._bind_args() abort dict
+function! s:command_maker_base._bind_args() abort dict
     " Resolve args, which might be a function or dictionary.
     if type(self.args) == type(function('tr'))
         let args = call(self.args, [])
@@ -391,7 +392,7 @@ function! s:maker_base._bind_args() abort dict
     let self.args = args
 endfunction
 
-function! s:maker_base._get_argv(jobinfo) abort dict
+function! s:command_maker_base._get_argv(jobinfo) abort dict
     " Resolve exe, which might be a function or dictionary.
     if type(self.exe) == type(function('tr'))
         let exe = call(self.exe, [])
@@ -503,7 +504,14 @@ function! neomake#GetMaker(name_or_maker, ...) abort
     endif
 
     " Create the maker object.
-    let maker = extend(copy(s:maker_base), copy(maker))
+    let bufnr = bufnr('%')
+    let GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, fts, bufnr)
+    if GetEntries != -1
+        let maker = extend(copy(s:maker_base), copy(maker))
+        let maker.get_list_entries = GetEntries
+    else
+        let maker = extend(copy(s:command_maker_base), copy(maker))
+    endif
     if !has_key(maker, 'name')
         if type(a:name_or_maker) == type('')
             let maker.name = a:name_or_maker
@@ -511,13 +519,8 @@ function! neomake#GetMaker(name_or_maker, ...) abort
             let maker.name = 'unnamed_maker'
         endif
     endif
-    let bufnr = bufnr('%')
-    let GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, fts, bufnr)
-    if GetEntries != -1
-        let maker.get_list_entries = GetEntries
-    endif
-    " Set defaults for "normal" makers.
     if !has_key(maker, 'get_list_entries')
+        " Set defaults for command/job based makers.
         let defaults = copy(s:maker_defaults)
         call extend(defaults, {
             \ 'exe': maker.name,
@@ -1615,7 +1618,9 @@ function! s:map_makers(jobinfo, makers, ...) abort
     for maker_or_name in a:makers
         try
             let maker = call('neomake#GetMaker', [maker_or_name] + a:000)
-            call maker._bind_args()
+            if has_key(maker, '_bind_args')
+                call maker._bind_args()
+            endif
 
             " Call .fn function in maker object, if any.
             if has_key(maker, 'fn')
