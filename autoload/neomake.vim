@@ -697,7 +697,7 @@ function! s:Make(options) abort
                 \ 'cwd': getcwd(),
                 \ 'verbosity': get(g:, 'neomake_verbose', 1),
                 \ 'active_jobs': {},
-                \ 'finished_jobs': [],
+                \ 'finished_jobs': 0,
                 \ 'options': options,
                 \ }
     if &verbose
@@ -893,7 +893,7 @@ function! s:CleanJobinfo(jobinfo) abort
     if !get(a:jobinfo, 'restarting', 0)
                 \ && !get(a:jobinfo, 'failed_to_start', 0)
         call neomake#utils#hook('NeomakeJobFinished', {'jobinfo': a:jobinfo})
-        call add(make_info.finished_jobs, a:jobinfo.id)
+        let make_info.finished_jobs += 1
     endif
 
     " Trigger autocmd if all jobs for a s:Make instance have finished.
@@ -906,7 +906,7 @@ function! s:CleanJobinfo(jobinfo) abort
         return
     endif
 
-    if len(make_info.finished_jobs)
+    if make_info.finished_jobs
         call s:init_job_output(a:jobinfo)
 
         " If signs were not cleared before this point, then the maker did not return
