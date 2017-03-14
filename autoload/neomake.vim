@@ -506,7 +506,7 @@ function! neomake#GetMaker(name_or_maker, ...) abort
     " Create the maker object.
     let bufnr = bufnr('%')
     let GetEntries = neomake#utils#GetSetting('get_list_entries', maker, -1, fts, bufnr)
-    if GetEntries != -1
+    if GetEntries isnot# -1
         let maker = extend(copy(s:maker_base), copy(maker))
         let maker.get_list_entries = GetEntries
     else
